@@ -1,53 +1,117 @@
-// Pines de sensores
-#define SENSOR_IZQ A0
-#define SENSOR_DER A1
+// --- Pines de velocidad (PWM) ---
+int VelocidadMotor1 = 6; 
+int VelocidadMotor2 = 5;
 
-// Pines de motor
-#define ENA 5    // Velocidad motor izquierdo (PWM)
-#define IN1 13   // Cambiado de 4 → 13
-#define IN2 12   // Cambiado de 3 → 12
-#define ENB 6    // Velocidad motor derecho (PWM)
-#define IN3 11   // Cambiado de 7 → 11
-#define IN4 10   // Cambiado de 8 → 10
+// --- Pines de control de giro ---
+int Motor1A = 13; 
+int Motor1B = 12;  
+int Motor2C = 11; 
+int Motor2D = 10; 
 
-int valorIzq, valorDer;
-float Kp = 0.05;
-int velocidadBase = 120;
+// --- Sensores infrarrojos ---
+int sensorIzq   = 2;
+int sensorCentro = 3;
+int sensorDer   = 4;
+
+// --- Variables para lectura ---
+int valIzq = 0;
+int valCentro = 0;
+int valDer = 0;
 
 void setup() {
-  pinMode(SENSOR_IZQ, INPUT);
-  pinMode(SENSOR_DER, INPUT);
-  pinMode(ENA, OUTPUT);
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(ENB, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
   Serial.begin(9600);
+  delay(1000);
+
+  pinMode(sensorIzq, INPUT);
+  pinMode(sensorCentro, INPUT);
+  pinMode(sensorDer, INPUT);
+
+  pinMode(Motor1A, OUTPUT);
+  pinMode(Motor1B, OUTPUT);
+  pinMode(Motor2C, OUTPUT);
+  pinMode(Motor2D, OUTPUT);
+  pinMode(VelocidadMotor1, OUTPUT);
+  pinMode(VelocidadMotor2, OUTPUT);
+
+  analogWrite(VelocidadMotor1, 200); 
+  analogWrite(VelocidadMotor2, 200);  
+
+  // Motores apagados al inicio
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor1B, LOW);
+  digitalWrite(Motor2C, LOW);
+  digitalWrite(Motor2D, LOW);
 }
 
 void loop() {
-  valorIzq = analogRead(SENSOR_IZQ);
-  valorDer = analogRead(SENSOR_DER);
+  // Lectura de sensores
+  valIzq = digitalRead(sensorIzq);
+  valCentro = digitalRead(sensorCentro);
+  valDer = digitalRead(sensorDer);
 
-  int error = valorIzq - valorDer;
-  int ajuste = Kp * error;
+  Serial.print("Izq: ");
+  Serial.print(valIzq);
+  Serial.print(" | Centro: ");
+  Serial.print(valCentro);
+  Serial.print(" | Der: ");
+  Serial.println(valDer);
 
-  int velocidadIzq = velocidadBase - ajuste;
-  int velocidadDer = velocidadBase + ajuste;
+  // --- Lógica de seguimiento ---
 
-  velocidadIzq = constrain(velocidadIzq, 0, 255);
-  velocidadDer = constrain(velocidadDer, 0, 255);
+  // Caso 1: Solo centro detecta negro → recto
+  if (valCentro == 1 && valIzq == 0 && valDer == 0) {
+    Serial.println("Recto");
+    adelante();
+  }
+  // Caso 2: Izquierda detecta negro → girar izquierda
+  else if (valIzq == 1 && valCentro == 0) {
+    Serial.println("Izquierda");
+    izquierda();
+  }
+  // Caso 3: Derecha detecta negro → girar derecha
+  else if (valDer == 1 && valCentro == 0) {
+    Serial.println("Derecha");
+    derecha();
+  }
+  // Caso 4: Todos detectan negro → detener (final o intersección)
+  else if (valIzq == 1 && valCentro == 1 && valDer == 1) {
+    Serial.println("Stop o Checkpoint");
+    detener();
+  }
+  // Caso 5: Todos detectan blanco → buscar línea
+  else {
+    Serial.println("Buscando línea...");
+    detener();
+  }
 
-  moverAdelante(velocidadIzq, velocidadDer);
+  delay(20);
 }
 
-void moverAdelante(int velIzq, int velDer) {
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  analogWrite(ENA, velIzq);
+// --- Funciones de movimiento ---
+void adelante() {
+  digitalWrite(Motor1A, HIGH);
+  digitalWrite(Motor1B, LOW);
+  digitalWrite(Motor2C, HIGH);
+  digitalWrite(Motor2D, LOW);
+}
 
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-  analogWrite(ENB, velDer);
+void izquierda() {
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor1B, LOW);
+  digitalWrite(Motor2C, HIGH);
+  digitalWrite(Motor2D, LOW);
+}
+
+void derecha() {
+  digitalWrite(Motor1A, HIGH);
+  digitalWrite(Motor1B, LOW);
+  digitalWrite(Motor2C, LOW);
+  digitalWrite(Motor2D, LOW);
+}
+
+void detener() {
+  digitalWrite(Motor1A, LOW);
+  digitalWrite(Motor1B, LOW);
+  digitalWrite(Motor2C, LOW);
+  digitalWrite(Motor2D, LOW);
 }
