@@ -2,7 +2,7 @@
 #include <Servo.h>
 
 // --- Sensor de color (TCS34725) ---
-Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_600MS, TCS34725_GAIN_4X);
 
 // --- Sensor ultrasónico HC-SR04 ---
 #define TRIG 8
@@ -13,8 +13,8 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 #define IN1 13
 #define IN2 12
 #define IN3 11
-#define IN4 12
-#define ENB 3
+#define IN4 10
+#define ENB 4
 
 // --- Servo ---
 Servo servoGarra;
